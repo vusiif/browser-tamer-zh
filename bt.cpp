@@ -8,6 +8,7 @@
 #include "app/url_opener.h"
 #include "cmdline.h"
 #include "app/discovery.h"
+#include "app/i18n.h"
 
 #if PLATFORM_WINDOWS
 #include <windows.h>
@@ -107,6 +108,9 @@ static string get_command(const string& data, string& command_data) {
 }
 
 static void execute(const string& data) {
+    // settings are already loaded by g_config at this point
+    i18n::init(g_state.ui_language);
+
     // will be set to "true" if "pick" command is detected
     bool force_picker{false};
     string clean_data = data; // copy of the data, will be used for further processing

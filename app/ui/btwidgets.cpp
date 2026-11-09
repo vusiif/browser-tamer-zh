@@ -6,21 +6,32 @@
 #include "common/stl.hpp"
 #include "common/str.h"
 #include "common/process.h"
+#include "cjk_fonts.h"
+#include "../i18n.h"
 
 using namespace std;
 using namespace grey;
 using namespace grey::common;
 namespace w = grey::widgets;
 
-std::vector<std::string> rule_locations { "URL", "Title", "Process", bt::strings::LuaScript };
-std::vector<std::pair<std::string, std::string>> url_scopes{
-    { ICON_MD_LANGUAGE, "Match anywhere" },
-    { ICON_MD_GITE, "Match only in host name" },
-    { ICON_MD_ROUNDABOUT_LEFT, "Match only in path" }
-};
+// built on each call (not at static init) so they follow the current UI language
+static std::vector<std::string> rule_locations() {
+    return { bt::tr("URL"), bt::tr("Title"), bt::tr("Process"), bt::tr(bt::strings::LuaScript) };
+}
+
+static std::vector<std::pair<std::string, std::string>> url_scopes() {
+    return {
+        { ICON_MD_LANGUAGE, bt::tr("Match anywhere") },
+        { ICON_MD_GITE, bt::tr("Match only in host name") },
+        { ICON_MD_ROUNDABOUT_LEFT, bt::tr("Match only in path") }
+    };
+}
 
 namespace bt::ui {
     void btw_on_app_initialised(grey::app& app) {
+        // no-op when already merged (this is also called again after rediscovery)
+        merge_cjk_fonts();
+
         app.preload_texture("incognito", incognito_icon_png, incognito_icon_png_len);
         app.preload_texture("res:black_hole", black_hole_png, black_hole_png_len);
 
@@ -139,7 +150,7 @@ namespace bt::ui {
         const int i) {
 
         // location
-        w::combo("##loc", rule_locations, reinterpret_cast<unsigned int&>(rule.loc), 90);
+        w::combo("##loc", rule_locations(), reinterpret_cast<unsigned int&>(rule.loc), 90);
 
         // value
         w::sl();
@@ -154,7 +165,7 @@ namespace bt::ui {
             }
 
             w::combo("##val", g_script.rule_function_names, selected, 250);
-            w::tt(strings::LuaScriptTooltip);
+            w::tt(tr(strings::LuaScriptTooltip));
 
             // reassign value
             if(!g_script.rule_function_names.empty()) {
@@ -177,14 +188,14 @@ namespace bt::ui {
         if(rule.loc != match_location::lua_script) {
             w::sl();
             w::icon_checkbox(ICON_MD_GRAIN, rule.is_regex);
-            w::tt(strings::RuleIsARegex);
+            w::tt(tr(strings::RuleIsARegex));
         }
 
         // app mode
         if(b.supports_frameless_windows()) {
             w::sl();
             w::icon_checkbox(ICON_MD_TAB_UNSELECTED, rule.app_mode);
-            w::tt("Open in chromeless window");
+            w::tt(tr("Open in chromeless window"));
         }
 
         // scope (for "URL" rules)
@@ -192,7 +203,7 @@ namespace bt::ui {
             w::sl();
             w::lbl("|", {.emp = emphasis::disabled});
             w::sl();
-            w::icon_list(url_scopes, reinterpret_cast<unsigned int&>(rule.scope));
+            w::icon_list(url_scopes(), reinterpret_cast<unsigned int&>(rule.scope));
         }
 
         // process name selection helper (for "process" rules)
@@ -203,7 +214,7 @@ namespace bt::ui {
                 refresh_pop_proc_names_items();
                 proc_names_open = true;
             }
-            w::tt(strings::RulePickProcessName);
+            w::tt(tr(strings::RulePickProcessName));
 
             {
                 if(w::popup proc_names_pop{"proc_names", proc_names_open}) {
@@ -216,7 +227,7 @@ namespace bt::ui {
                             }
                         }
                     }
-                    w::tt("Filter process names");
+                    w::tt(tr("Filter process names"));
                     if(w::list("##proc", pop_proc_names_items_filtered, pop_proc_names_selected)) {
                         rule.value = pop_proc_names_items_filtered[pop_proc_names_selected];
                     }
@@ -226,7 +237,7 @@ namespace bt::ui {
 
         if(i != -1) {
             w::sl();
-            if(w::button(ICON_MD_DELETE, emphasis::error, true, false, "Delete rule")) {
+            if(w::button(ICON_MD_DELETE, emphasis::error, true, false, tr("Delete rule"))) {
                 bi.delete_rule(rule.value);
             }
         }

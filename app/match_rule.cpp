@@ -3,6 +3,7 @@
 #include <format>
 #include <regex>
 #include "strings.h"
+#include "i18n.h"
 
 using namespace std;
 using namespace grey::common;
@@ -28,45 +29,45 @@ namespace bt {
             return value;
         }
 
-        string r;
+        string type;
         if(include_type) {
-            r = is_regex ? "regex " : "substring ";
+            type = tr(is_regex ? "regex " : "substring ");
         }
 
-        r += format("'{}' in ", value);
-
+        string where;
         switch(loc) {
             case match_location::url: {
                 switch(scope) {
                     case match_scope::any:
-                        r += "URL";
+                        where = tr("URL");
                         break;
                     case match_scope::domain:
-                        r += format("domain part of the URL", value);
+                        where = tr("domain part of the URL");
                         break;
                     case match_scope::path:
-                        r += format("query part of the URL", value);
+                        where = tr("query part of the URL");
                         break;
                 }
             }
             break;
             case match_location::window_title:
-                r += "application title";
+                where = tr("application title");
                 break;
             case match_location::process_name:
-                r += "process name";
+                where = tr("process name");
                 break;
             case match_location::lua_script:
-                r += strings::LuaScript;
+                where = tr(strings::LuaScript);
                 break;
         }
 
-        return r;
+        // e.g. "substring 'abc' in URL"; translations may reorder the parts
+        return trf("{}'{}' in {}", type, value, where);
     }
 
     std::string match_rule::get_type_string() const {
-        if(loc == match_location::lua_script) return strings::LuaScript;
-        return is_regex ? "regex" : "substring";
+        if(loc == match_location::lua_script) return tr(strings::LuaScript);
+        return tr(is_regex ? "regex" : "substring");
     }
 
     bool match_rule::parse_url(const string& url, string& proto, string& host, string& path) {

@@ -7,6 +7,7 @@
 #include <cmath>
 
 #include "common/clipboard.h"
+#include "../i18n.h"
 
 using namespace std;
 namespace w = grey::widgets;
@@ -60,7 +61,7 @@ namespace bt::ui {
             // Line 1: Caller icon + caller info
             string line1 = cp.process_description;
             if(line1.empty()) line1 = cp.process_name;
-            if(line1.empty()) line1 = "Unknown";
+            if(line1.empty()) line1 = tr("unknown");
             sz line1_text_size = w::text_size_get(line1);
             icon_size = line1_text_size.height;
 
@@ -154,7 +155,7 @@ namespace bt::ui {
             } else if(!cp.process_name.empty()) {
                 w::lbl(cp.process_name, {.emp = emphasis::primary});
             } else {
-                w::lbl("unknown", {.emp = emphasis::error});
+                w::lbl(tr("unknown"), {.emp = emphasis::error});
             }
         }
         if(w::is_hovered()) {
@@ -163,31 +164,31 @@ namespace bt::ui {
             float col1_start = 80 * w::scale;
 
             if(!cp.process_id.empty()) {
-                w::lbl("id:");
+                w::lbl(tr("id:"));
                 w::sl(col1_start);
                 w::lbl(cp.process_id, {.emp = emphasis::primary});
             }
 
             if(!cp.process_name.empty()) {
-                w::lbl("name:");
+                w::lbl(tr("name:"));
                 w::sl(col1_start);
                 w::lbl(cp.process_name, {.emp = emphasis::primary});
             }
 
             if(!cp.process_description.empty()) {
-                w::lbl("description:");
+                w::lbl(tr("description:"));
                 w::sl(col1_start);
                 w::lbl(cp.process_description, {.emp = emphasis::primary});
             }
 
             if(!cp.process_path.empty()) {
-                w::lbl("path:");
+                w::lbl(tr("path:"));
                 w::sl(col1_start);
                 w::lbl(cp.process_path, {.emp = emphasis::primary});
             }
 
             if(!cp.window_title.empty()) {
-                w::lbl("title:");
+                w::lbl(tr("title:"));
                 w::sl(col1_start);
                 w::lbl(cp.window_title, {.emp = emphasis::primary});
             }
@@ -203,11 +204,11 @@ namespace bt::ui {
         if(w::is_hovered()) {
             w::rich_tt rtt;
 
-            w::lbl("browser: ");
+            w::lbl(tr("browser: "));
             w::sl(80 * w::scale);
             w::lbl(bmr.profile.b().name, {.emp = emphasis::primary});
 
-            w::lbl("profile: ");
+            w::lbl(tr("profile: "));
             w::sl(80 * w::scale);
             w::lbl(bmr.profile.p().name, {.emp = emphasis::primary});
         }
@@ -249,7 +250,7 @@ namespace bt::ui {
                 w::mouse_cursor(w::mouse_cursor_type::hand);
                 if(w::is_leftclicked()) {
                     clipboard::set_text(format("{}\n{}", cp.raw_url, cp.url));
-                    w::toast(emphasis::info, "URLs copied to clipboard.");
+                    w::toast(emphasis::info, tr("URLs copied to clipboard."));
                 }
 
                 w::rich_tt rtt;
@@ -259,7 +260,7 @@ namespace bt::ui {
                 w::lbl(cp.url, {.emp = emphasis::primary, .center_x = true});
                 w::spc();
                 w::sep();
-                w::lbl("Click to copy both URLs to clipboard.", {.emp = emphasis::disabled, .center_x = true});
+                w::lbl(tr("Click to copy both URLs to clipboard."), {.emp = emphasis::disabled, .center_x = true});
             }
         }
     }

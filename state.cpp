@@ -125,6 +125,7 @@ namespace bt {
 
     void from_node(const fkyaml::node &node, state &state) {
         read<string>(node, "ui_theme", state.ui_theme);
+        read<string>(node, "ui_language", state.ui_language);
         read<bool>(node, "log_rule_hits", state.log_rule_hits);
         read<bool>(node, "show_hidden_browsers", state.show_hidden_browsers);
 
@@ -156,6 +157,7 @@ namespace bt {
     void to_node(fkyaml::node &node, const state &state) {
         node = fkyaml::node::mapping();
         node["ui_theme"] = state.ui_theme;
+        node["ui_language"] = state.ui_language;
         node["log_rule_hits"] = state.log_rule_hits;
         node["show_hidden_browsers"] = state.show_hidden_browsers;
         write_enum<icon_overlay_mode>(node, "icon_overlay", state.icon_overlay);

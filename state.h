@@ -116,6 +116,8 @@ namespace bt {
     class state {
     public:
         std::string ui_theme;
+        // UI language code ("en", "zh_CN", ...). Empty follows the operating system.
+        std::string ui_language;
         bool log_rule_hits{false};
         bool show_hidden_browsers{false};
         icon_overlay_mode icon_overlay{icon_overlay_mode::profile_on_browser};

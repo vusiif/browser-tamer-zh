@@ -3,6 +3,7 @@
 #include "globals.h"
 #include <format>
 #include "discovery.h"
+#include "i18n.h"
 
 
 #if PLATFORM_WINDOWS
@@ -19,6 +20,7 @@ namespace bt {
 
 #if PLATFORM_WINDOWS
         return vector {
+                // name, description and fix_description are English keys, translated where they are displayed
                 system_check{
                     "default_browser",
                     "System Default Browser",
@@ -32,7 +34,7 @@ namespace bt {
                         bool myself_is_default = myself_http && myself_https;
 
                         if(!myself_is_default) {
-                            error_message = format(
+                            error_message = trf(
                                 "Current system settings:\nHTTP:  {} ({})\nHTTPS: {} ({})\nExpected progid: {}",
                                 progid_http,
                                 get_prog_id_application_name(progid_http),

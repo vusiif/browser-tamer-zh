@@ -21,6 +21,11 @@ if(WIN32)
     add_compile_definitions(NOMINMAX)   # Windows SDK overrides those
 endif()
 
+# Source files are UTF-8 (translations, CJK literals). Without this MSVC reads them in the system code page.
+if(MSVC)
+    add_compile_options("/utf-8")
+endif()
+
 string(TIMESTAMP CURRENT_YEAR "%Y")
 configure_file(globals.h.in ${CMAKE_CURRENT_BINARY_DIR}/globals.h @ONLY)
 configure_file(bt.rc.in "${CMAKE_CURRENT_SOURCE_DIR}/bt.rc" @ONLY)
@@ -58,8 +63,8 @@ enable_testing()
 FetchContent_Declare(grey
     #GIT_REPOSITORY git@github.com:aloneguid/grey.git
     GIT_REPOSITORY https://github.com/aloneguid/grey.git
-    GIT_TAG        202610
-    GIT_SHALLOW    TRUE
+    # Pinned to an exact commit: upstream branch "202610" no longer exists, and branches move.
+    GIT_TAG        c1a3d1198d0ad3b8c76e0e92c6870a518a207bbb
     SOURCE_SUBDIR  grey
 )
 
@@ -110,6 +115,18 @@ file(GLOB core_src
         "${grey_SOURCE_DIR}/grey/common/datetime.cpp"
         "${grey_SOURCE_DIR}/grey/common/process.cpp")
 
+# Translations: i18n/*.json are embedded into the executable as byte arrays.
+file(GLOB I18N_JSON CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/i18n/*.json")
+set(I18N_CPP "${CMAKE_CURRENT_BINARY_DIR}/i18n_data.cpp")
+string(REPLACE ";" "|" I18N_JSON_ARG "${I18N_JSON}")
+add_custom_command(
+        OUTPUT "${I18N_CPP}"
+        COMMAND ${CMAKE_COMMAND} "-DIN=${I18N_JSON_ARG}" "-DOUT=${I18N_CPP}"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_i18n.cmake"
+        DEPENDS ${I18N_JSON} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_i18n.cmake"
+        COMMENT "Embedding translations"
+        VERBATIM)
+
 if(WIN32)
     file(GLOB core_src
             ${core_src}
@@ -118,7 +135,12 @@ if(WIN32)
             "${grey_SOURCE_DIR}/grey/common/win32/os.cpp"
             "${grey_SOURCE_DIR}/grey/common/win32/reg.cpp"
             "${grey_SOURCE_DIR}/grey/common/win32/user.cpp")
+endif()
 
+# added after the globs: file(GLOB) drops paths that do not exist yet, and this one is generated
+list(APPEND core_src "${I18N_CPP}")
+
+if(WIN32)
     add_executable (${PROJECT_SLUG} WIN32 ${core_src} "bt.cpp" bt.rc)
 else()
     add_executable (${PROJECT_SLUG} ${core_src} "bt.cpp")
@@ -148,6 +170,7 @@ file(GLOB test_src
         app/pipeline/clearurls.h
         app/pipeline/clearurls.cpp
 )
+list(APPEND test_src "${I18N_CPP}")
 add_executable(test1 ${test_src})
 include(GoogleTest)
 gtest_discover_tests(test1)
@@ -161,6 +184,14 @@ set(COMMON_LIBS
 
 if(NOT WIN32)
     list(APPEND COMMON_LIBS CURL::libcurl)
+endif()
+
+# CJK font lookup (app/ui/cjk_fonts.cpp) and OS language detection (app/i18n.cpp)
+if(APPLE)
+    list(APPEND COMMON_LIBS "-framework CoreFoundation")
+elseif(UNIX)
+    find_package(Fontconfig REQUIRED)
+    list(APPEND COMMON_LIBS Fontconfig::Fontconfig)
 endif()
 
 set(COMMON_INCLUDES

@@ -5,6 +5,7 @@
 #include "btwidgets.h"
 #include "common/clipboard.h"
 #include "common/keyboard.h"
+#include "../i18n.h"
 
 #if PLATFORM_WINDOWS
 #include "common/win32/os.h"
@@ -18,7 +19,7 @@ namespace w = widgets;
 
 namespace bt::ui {
     picker_app::picker_app(const click_payload& cp, std::optional<std::vector<profile_selection> > selections)
-        : cp{cp}, title{APP_LONG_NAME " - Pick"},
+        : cp{cp}, title{APP_LONG_NAME " - " + tr("Pick")},
           app{app::make(title, {100, 120})} {
         app->fonts.load_icons = true;
         app->initial_theme_id = g_state.ui_theme;
@@ -92,7 +93,7 @@ namespace bt::ui {
 
         {
             if(choices.empty()) {
-                w::lbl("no browsers", {.emp = emphasis::error, .center_x = true, .center_y = true});
+                w::lbl(tr("no browsers"), {.emp = emphasis::error, .center_x = true, .center_y = true});
             } else {
                 point cur1 = w::cur_get();
 
@@ -114,7 +115,7 @@ namespace bt::ui {
 
         if(is_settings_open) {
             w::wnd w{
-                "Settings", {
+                tr("Settings") + "###settings", {
                     .open_ptr = &is_settings_open,
                     .size = {400, 0},
                     .size_cond = act_condition::once,
@@ -241,10 +242,10 @@ namespace bt::ui {
                 .speed = 1.0f});
             if(w::is_hovered()) {
                 w::mouse_cursor(w::mouse_cursor_type::hand);
-                w::tt("Tracker removed.\nClick to copy original URL with trackers to clipboard.");
+                w::tt(tr("Tracker removed.\nClick to copy original URL with trackers to clipboard."));
                 if(w::is_leftclicked()) {
                     clipboard::set_text(cp.raw_url);
-                    w::toast(emphasis::info, "URL copied to clipboard.");
+                    w::toast(emphasis::info, tr("URL copied to clipboard."));
                 }
             }
 
@@ -257,13 +258,13 @@ namespace bt::ui {
 
         for(const auto& [id, icon, tooltip]: action_menu_items) {
             w::sl();
-            if(w::button(icon, emphasis::none, true, false, tooltip)) {
+            if(w::button(icon, emphasis::none, true, false, tr(tooltip))) {
                 menu_item_clicked(id);
             }
         }
 
         w::sl();
-        if(w::button(ICON_MD_SETTINGS, emphasis::none, true, false, "show settings")) {
+        if(w::button(ICON_MD_SETTINGS, emphasis::none, true, false, tr("show settings"))) {
             is_settings_open = !is_settings_open;
         }
     }
@@ -407,36 +408,37 @@ namespace bt::ui {
     }
 
     void picker_app::render_settings() {
-        w::combo("icon drawing", {
-                     "profile on top of browser",
-                     "browser on top of profile",
-                     "browser only",
-                     "profile only"
+        w::combo(tr("icon drawing"), {
+                     tr("profile on top of browser"),
+                     tr("browser on top of profile"),
+                     tr("browser only"),
+                     tr("profile only")
                  }, (unsigned int&) g_state.icon_overlay);
-        w::enum_combo<label_display_mode>("label", g_state.picker.label_display);
+        // values come from enum names, left as is
+        w::enum_combo<label_display_mode>(tr("label"), g_state.picker.label_display);
 
 #if PLATFORM_WINDOWS
         app->win32_close_on_focus_lost = false; // never close app when settings are open
 #endif
 
-        w::slider(g_state.picker.box_size, 5, 256, "item size", 0.1);
-        w::slider(g_state.picker.item_padding, 0, 100, "padding", 0.1);
-        w::slider(g_state.picker.item_rounding, 0, g_state.picker.box_size, "item rounding", 0.1);
-        w::slider(g_state.picker.label_size, -15.0f, 15.0f, "label size", 0.5);
-        w::slider(g_state.picker.min_width_perc, 10, 50, "min width %");
-        w::slider(g_state.picker.max_width_perc, g_state.picker.min_width_perc + 10, 100, "max width %");
-        w::checkbox("show key hints (1-10)", g_state.picker.show_key_hints);
-        if(w::slider(g_state.picker.border_width, 0, 10, "border width", 1, true)) {
+        w::slider(g_state.picker.box_size, 5, 256, tr("item size"), 0.1);
+        w::slider(g_state.picker.item_padding, 0, 100, tr("padding"), 0.1);
+        w::slider(g_state.picker.item_rounding, 0, g_state.picker.box_size, tr("item rounding"), 0.1);
+        w::slider(g_state.picker.label_size, -15.0f, 15.0f, tr("label size"), 0.5);
+        w::slider(g_state.picker.min_width_perc, 10, 50, tr("min width %"));
+        w::slider(g_state.picker.max_width_perc, g_state.picker.min_width_perc + 10, 100, tr("max width %"));
+        w::checkbox(tr("show key hints (1-10)"), g_state.picker.show_key_hints);
+        if(w::slider(g_state.picker.border_width, 0, 10, tr("border width"), 1, true)) {
             app->main_window_opts().border = g_state.picker.border_width;
         }
-        w::slider(g_state.picker.opacity, 0.1, 1, "window opacity");
-        if(w::checkbox("show native window chrome", g_state.picker.show_native_chrome))
+        w::slider(g_state.picker.opacity, 0.1, 1, tr("window opacity"));
+        if(w::checkbox(tr("show native window chrome"), g_state.picker.show_native_chrome))
             app->chrome = g_state.picker.show_native_chrome ? system_chrome::native : system_chrome::headerless;
-        w::tt("When enabled, the window will have standard OS title bar and borders.\nApplies next time picker opens.");
+        w::tt(tr("When enabled, the window will have standard OS title bar and borders.\nApplies next time picker opens."));
 
         w::spc(2);
         w::sep();
-        if(w::button(ICON_MD_RESTORE " reset", emphasis::error)) {
+        if(w::button(ICON_MD_RESTORE " " + tr("reset"), emphasis::error)) {
             g_state.picker = picker_state{};
         }
     }

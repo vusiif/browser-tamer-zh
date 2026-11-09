@@ -95,6 +95,7 @@ namespace bt::ui {
 
         bool run_frame();
         void render_menu_bar();
+        static void render_language_menu();
 
         bool startup_health_warned{false};
         bool startup_health_opened{false};

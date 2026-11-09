@@ -1,6 +1,7 @@
 #pragma once
 #include "grey.h"
 #include "../strings.h"
+#include "../i18n.h"
 
 namespace bt::ui {
 
@@ -11,7 +12,7 @@ namespace bt::ui {
         static void help_link(const std::string& relative_url) {
             w::lbl(ICON_MD_LIGHTBULB, {.emp = grey::emphasis::disabled});
             if(w::is_hovered()) {
-                w::tt(bt::strings::OnlineHelpTooltip);
+                w::tt(bt::tr(bt::strings::OnlineHelpTooltip));
                 ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
             }
             if(w::is_leftclicked()) {

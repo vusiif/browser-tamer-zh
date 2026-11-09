@@ -1,5 +1,6 @@
 #include "browser.h"
 #include "match_rule.h"
+#include "i18n.h"
 #include <filesystem>
 #include <algorithm>
 #include "common/str.h"
@@ -76,7 +77,11 @@ namespace bt {
         process p = process::start(cmdline, false, profile.no_window);
         if(!p && !p.get_error().empty()) {
 #if PLATFORM_WINDOWS
-            win32::user::message_box("Browser launch error", format("Command line: {}.\r\nError: {}", cmdline, p.get_error()));
+            // MessageBoxW: grey's message_box uses MessageBoxA, which mangles UTF-8 (translated) text
+            ::MessageBoxW(nullptr,
+                str::to_wstr(trf("Command line: {}.\r\nError: {}", cmdline, p.get_error())).c_str(),
+                str::to_wstr(tr("Browser launch error")).c_str(),
+                MB_OK);
 #endif
         }
     }
