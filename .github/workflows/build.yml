@@ -67,6 +67,51 @@ jobs:
         # set it to false to clear any cache in case of build errors
         cache: false
 
+    # Source archives vcpkg downloads (not build outputs), so a flaky upstream site
+    # only has to work once per vcpkg baseline.
+    - name: 💾 cache vcpkg downloads
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.VCPKG_DOWNLOADS || format('{0}/downloads', env.VCPKG_ROOT) }}
+        key: vcpkg-downloads-${{ runner.os }}-${{ env.VCPKG_HASH }}
+
+    # www.lua.org often fails from GitHub runners (timeouts, SSL connect error 35), and vcpkg
+    # gives up on it. Pre-seed vcpkg's download cache: try our backup copy (release "deps"),
+    # then the official site, and accept a file only if its SHA512 matches the vcpkg port.
+    # When the vcpkg baseline moves to another Lua version, update FILE/SHA512 below (and the
+    # "deps" release); until then this step is harmless and vcpkg downloads the new version itself.
+    - name: 🌙 prefetch Lua source
+      shell: pwsh
+      env:
+        FILE: lua-5.5.0.tar.gz
+        SHA512: 3253d2cdc929da6438095a30d66ef16a1abdbb0ada8fee238705b3b38492f14be9553640fdca6b25661e01155ba5582032e0a2ef064e4c283e85efc0a128cabe
+      run: |
+        # same directory vcpkg itself uses
+        $dir = if ($env:VCPKG_DOWNLOADS) { $env:VCPKG_DOWNLOADS } else { Join-Path $env:VCPKG_ROOT 'downloads' }
+        $dest = Join-Path $dir $env:FILE
+        New-Item -ItemType Directory -Force $dir | Out-Null
+        function Test-Archive($path) {
+          (Test-Path $path) -and ((Get-FileHash $path -Algorithm SHA512).Hash.ToLower() -eq $env:SHA512)
+        }
+        if (Test-Archive $dest) { Write-Host "already cached: $dest"; exit 0 }
+        $urls = @(
+          "https://github.com/${{ github.repository }}/releases/download/deps/$env:FILE",
+          "https://www.lua.org/ftp/$env:FILE"
+        )
+        foreach ($url in $urls) {
+          $tmp = "$dest.tmp"
+          curl.exe -fsSL --retry 3 --retry-all-errors --retry-delay 10 --max-time 120 -o $tmp $url
+          if ($LASTEXITCODE -eq 0 -and (Test-Archive $tmp)) {
+            Move-Item -Force $tmp $dest
+            Write-Host "fetched $env:FILE from $url"
+            exit 0
+          }
+          Write-Host "::warning::could not get a valid $env:FILE from $url"
+          Remove-Item -Force -ErrorAction SilentlyContinue $tmp
+        }
+        Write-Host "::error::no source provided a valid $env:FILE"
+        exit 1
+
     - name: ⚙️ configure
       run: >
         cmake -B build -S .
