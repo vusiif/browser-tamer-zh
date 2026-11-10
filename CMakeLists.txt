@@ -6,7 +6,7 @@ include(FetchContent)
 set(PROJECT_SLUG "bt")
 
 project ("Browser Tamer"
-        VERSION 6.3.2
+        VERSION 6.3.4
         HOMEPAGE_URL "https://www.aloneguid.uk/projects/bt/"
         LANGUAGES CXX)
 
