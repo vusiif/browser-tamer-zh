@@ -259,6 +259,8 @@ if(WIN32)
     set(CPACK_WIX_VERSION 4)
 
     # WiX requires a stable Upgrade GUID — generate ONE and hardcode it (don't regenerate per build)
+    # Intentionally the same as upstream: the Chinese build replaces the English one on install
+    # (and vice versa), since both share the config directory and the default-browser registration.
     set(CPACK_WIX_UPGRADE_GUID "C7630F02-56B6-41A6-8166-9D15AF6961E7")
     # needs to re-generate
     set(CPACK_WIX_PRODUCT_GUID "*")
