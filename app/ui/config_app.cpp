@@ -14,6 +14,7 @@
 #include "../../res.h"
 #include "../strings.h"
 #include "../i18n.h"
+#include "../resident.h"
 #include "extra_widgets.hpp"
 #include "common/datetime.h"
 #include "common/os.h"
@@ -43,6 +44,18 @@ namespace bt::ui {
         auto& opts = app->main_window_opts();
         opts.has_menu_bar = true;
         opts.open_ptr = &is_open;
+
+#if PLATFORM_WINDOWS
+        // In tray mode minimising "hides to tray": the window closes and the resident process keeps running,
+        // the tray icon (or the next launch) brings it back. Closing with X does the same thing naturally.
+        app->on_app_window_message = [this](UINT msg, WPARAM wparam, LPARAM) -> LRESULT {
+            if(msg == WM_SYSCOMMAND && (wparam & 0xFFF0) == SC_MINIMIZE && resident::is_resident()) {
+                is_open = false;
+                return 1;
+            }
+            return 0;
+        };
+#endif
 
         app->on_initialised = [this]() {
             app->preload_texture("logo", icon_png, icon_png_len);
@@ -102,6 +115,8 @@ namespace bt::ui {
     }
 
     bool config_app::run_frame() {
+        if(resident::cancel_requested()) return false;
+
         if(g_state.browsers.empty()) {
             render_no_browsers();
         } else {
@@ -160,7 +175,12 @@ namespace bt::ui {
                 }
 
                 w::sep();
+                if(resident::is_resident() && w::mi(tr("Hide to tray"), true, ICON_MD_MINIMIZE)) {
+                    is_open = false;
+                }
                 if(w::mi(tr("Exit"), true, ICON_MD_LOGOUT)) {
+                    // in tray mode this quits the resident process too, not just the window
+                    resident::request_exit();
                     is_open = false;
                 }
             }
@@ -193,6 +213,17 @@ namespace bt::ui {
             if(w::menu m{tr("General")}; m) {
                 w::small_checkbox(tr("Log to clicks.csv"), g_state.log_rule_hits);
                 w::small_checkbox(tr("Rediscover on startup"), g_state.rediscover_on_config_startup);
+#if PLATFORM_WINDOWS
+                w::small_checkbox(tr("Keep running in system tray"), g_state.run_in_tray);
+                w::tt(tr("Stays in the notification area after windows close, so the picker opens instantly.\n"
+                         "Closing or minimising this window hides it to the tray."));
+                if(g_state.run_in_tray) {
+                    bool autostart = resident::is_autostart_enabled();
+                    if(w::small_checkbox(tr("Start with Windows"), autostart)) {
+                        resident::set_autostart(autostart);
+                    }
+                }
+#endif
 
                 if(w::menu m_toast{tr("Toast"), true, ICON_MD_NOTIFICATIONS}; m_toast) {
                     w::small_checkbox(tr("Enabled"), g_state.toast.enabled);

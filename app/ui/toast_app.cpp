@@ -8,6 +8,7 @@
 
 #include "common/clipboard.h"
 #include "../i18n.h"
+#include "../resident.h"
 
 using namespace std;
 namespace w = grey::widgets;
@@ -267,6 +268,9 @@ namespace bt::ui {
 
     void toast_app::run() {
         app->run([this]() {
+            // a new link arrived at the resident instance: make room for it
+            if(resident::cancel_requested()) return false;
+
             size_to_fit();
 
             app->opacity = is_hovered ? 1.0f : g_state.toast.opacity;

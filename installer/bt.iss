@@ -124,8 +124,15 @@ Root: HKCU; Subkey: "Software\Classes\{#EpubClass}\Application"; ValueType: stri
 Root: HKCU; Subkey: "Software\Classes\{#EpubClass}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExe},2"
 Root: HKCU; Subkey: "Software\Classes\{#EpubClass}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#AppExe}"" ""%1"""
 
+; --- "Start with Windows" (written by the app itself, see app/resident.cpp): only removed on uninstall
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; ValueName: "{#AppName}"; Flags: uninsdeletevalue
+
 ; --- make Windows list Browser Tamer under Default Apps
 Root: HKCU; Subkey: "Software\RegisteredApplications"; ValueType: string; ValueName: "{#AppName}"; ValueData: "Software\Clients\StartMenuInternet\BrowserTamer\Capabilities"; Flags: uninsdeletevalue
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
+
+[UninstallRun]
+; bt.exe keeps running in the tray; ask it to quit (no /F: it exits cleanly and removes its tray icon)
+Filename: "{sys}\taskkill.exe"; Parameters: "/IM {#AppExe}"; Flags: runhidden waituntilterminated; RunOnceId: "StopResident"

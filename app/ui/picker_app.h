@@ -71,6 +71,18 @@ namespace bt::ui {
         match_rule creator_rule{};
         bool url_focused{false};
 
+        // focus tracking (see constructor)
+        int frame_no{0};
+        bool had_focus{false};
+#if PLATFORM_WINDOWS
+        HWND fg_at_start{nullptr};
+        static HWND main_hwnd();
+        static bool is_own_window(HWND hwnd);
+        void close_now();
+        void track_focus();
+#endif
+        bool should_close_on_focus_loss() const;
+
         bool run_frame();
         void recalc();
         void render_action_menu();

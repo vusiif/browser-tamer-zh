@@ -5,6 +5,11 @@
   "Add custom browser": "添加自定义浏览器",
   "Open configuration directory": "打开配置目录",
   "Exit": "退出",
+  "Hide to tray": "隐藏到托盘",
+  "Open settings": "打开设置",
+  "Start with Windows": "开机自动启动",
+  "Keep running in system tray": "常驻系统托盘",
+  "Stays in the notification area after windows close, so the picker opens instantly.\nClosing or minimising this window hides it to the tray.": "窗口关闭后仍留在右下角通知区域，点击链接时选择器可立即弹出。\n关闭或最小化本窗口会将其隐藏到托盘。",
 
   "Tools": "工具",
   "Open Windows Defaults": "打开 Windows 默认应用设置",

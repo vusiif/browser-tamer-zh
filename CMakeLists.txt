@@ -66,6 +66,10 @@ FetchContent_Declare(grey
     # Pinned to an exact commit: upstream branch "202610" no longer exists, and branches move.
     GIT_TAG        c1a3d1198d0ad3b8c76e0e92c6870a518a207bbb
     SOURCE_SUBDIR  grey
+    # Reuse one Direct3D device for every window (creating it cost ~300ms per picker) and add app::prewarm().
+    # Reset first so re-running the patch step on an already patched checkout cannot fail.
+    PATCH_COMMAND  git checkout -- .
+          COMMAND  git apply --ignore-whitespace "${CMAKE_CURRENT_SOURCE_DIR}/cmake/patches/grey-reuse-d3d-device.patch"
 )
 
 FetchContent_MakeAvailable(grey)

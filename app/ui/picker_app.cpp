@@ -6,6 +6,7 @@
 #include "common/clipboard.h"
 #include "common/keyboard.h"
 #include "../i18n.h"
+#include "../resident.h"
 
 #if PLATFORM_WINDOWS
 #include "common/win32/os.h"
@@ -29,7 +30,17 @@ namespace bt::ui {
 
         app->always_on_top = g_state.picker.always_on_top;
 #if PLATFORM_WINDOWS
-        app->win32_close_on_focus_lost = g_state.picker.close_on_focus_loss;
+        // Focus loss is handled here rather than by grey's win32_close_on_focus_lost: that relies on WM_KILLFOCUS,
+        // which never arrives when Windows refused to give the picker focus in the first place (foreground lock),
+        // leaving the picker open until it happened to be activated and deactivated later.
+        app->on_app_window_message = [this](UINT msg, WPARAM wparam, LPARAM lparam) -> LRESULT {
+            if(msg == WM_ACTIVATE && LOWORD(wparam) == WA_INACTIVE && should_close_on_focus_loss()) {
+                if(!is_own_window(reinterpret_cast<HWND>(lparam))) {
+                    close_now();
+                }
+            }
+            return 0;
+        };
 #endif
         auto cc = app->get_clear_color();
         ImU32 cc1 = rgb_colour{ImVec4(cc[0], cc[1], cc[2], cc[3])};
@@ -88,7 +99,72 @@ namespace bt::ui {
         return k_alt || k_ctrl || k_shift || k_caps;
     }
 
+    bool picker_app::should_close_on_focus_loss() const {
+        // never close while the settings popup is open: it may live in its own OS window
+        return g_state.picker.close_on_focus_loss && !is_settings_open;
+    }
+
+#if PLATFORM_WINDOWS
+    HWND picker_app::main_hwnd() {
+        return static_cast<HWND>(ImGui::GetMainViewport()->PlatformHandleRaw);
+    }
+
+    bool picker_app::is_own_window(HWND hwnd) {
+        if(!hwnd) return false;
+        DWORD pid{0};
+        ::GetWindowThreadProcessId(hwnd, &pid);
+        return pid == ::GetCurrentProcessId();
+    }
+
+    void picker_app::close_now() {
+        is_open = false;
+        // hide at once; tearing the window down takes a few more frames
+        if(HWND h = main_hwnd()) {
+            ::ShowWindow(h, SW_HIDE);
+            ::PostMessageW(h, WM_CLOSE, 0, 0);
+        }
+    }
+
+    void picker_app::track_focus() {
+        frame_no++;
+        HWND h = main_hwnd();
+        if(!h) return;
+
+        // grey shows the window after the first frame; from then on claim the foreground explicitly,
+        // retrying for a few frames because activation can race with whatever the user is doing
+        constexpr int ClaimFrames = 8;
+        HWND fg = ::GetForegroundWindow();
+        if(is_own_window(fg)) {
+            had_focus = true;
+        } else if(frame_no >= 2 && frame_no <= ClaimFrames && !had_focus && frame_no % 2 == 0) {
+            app->foreground();
+        }
+        if(frame_no <= ClaimFrames || !should_close_on_focus_loss() || is_own_window(fg)) return;
+
+        if(frame_no == ClaimFrames + 1 && !had_focus) {
+            // Windows did not let us take the foreground: remember who has it and close
+            // as soon as the user moves on to anything else
+            fg_at_start = fg;
+            return;
+        }
+
+        if(had_focus || fg != fg_at_start) {
+            close_now();
+        }
+    }
+#endif
+
     bool picker_app::run_frame() {
+        if(resident::cancel_requested()) {
+            is_open = false;
+            return false;
+        }
+
+#if PLATFORM_WINDOWS
+        track_focus();
+        if(!is_open) return false;
+#endif
+
         app->opacity = g_state.picker.opacity;
 
         {
@@ -186,6 +262,13 @@ namespace bt::ui {
         g_config.tick(ImGui::GetIO().DeltaTime);
 
         w::toast_render_frame();
+
+#if PLATFORM_WINDOWS
+        // a choice was made: get out of the way before the browser starts
+        if(!is_open) {
+            if(HWND h = main_hwnd()) ::ShowWindow(h, SW_HIDE);
+        }
+#endif
 
         return is_open;
     }
@@ -416,10 +499,6 @@ namespace bt::ui {
                  }, (unsigned int&) g_state.icon_overlay);
         // values come from enum names, left as is
         w::enum_combo<label_display_mode>(tr("label"), g_state.picker.label_display);
-
-#if PLATFORM_WINDOWS
-        app->win32_close_on_focus_lost = false; // never close app when settings are open
-#endif
 
         w::slider(g_state.picker.box_size, 5, 256, tr("item size"), 0.1);
         w::slider(g_state.picker.item_padding, 0, 100, tr("padding"), 0.1);

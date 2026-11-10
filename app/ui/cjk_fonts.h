@@ -10,4 +10,10 @@ namespace bt::ui {
      * it does nothing if the current font atlas already has the CJK font merged.
      */
     void merge_cjk_fonts();
+
+    /**
+     * @brief Reads the CJK font files merge_cjk_fonts() will use into the process-lifetime cache, so the first window
+     *        does not wait for ~20MB of disk reads. Does not need an ImGui context.
+     */
+    void prewarm_cjk_fonts();
 }

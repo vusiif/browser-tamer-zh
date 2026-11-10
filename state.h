@@ -124,6 +124,8 @@ namespace bt {
         int highlight_width{4};
         bool rediscover_on_config_startup{true};
         bool discover_black_hole_browser{false};
+        // Windows: stay resident in the notification area so the picker opens without a cold start
+        bool run_in_tray{true};
         toast_state toast;
         picker_state picker;
         transforms_state transforms;

@@ -141,6 +141,15 @@ namespace bt::ui {
         }
     }
 
+    void prewarm_cjk_fonts() {
+        // mirror merge_cjk_fonts(): the first existing candidate for regular and for bold
+        for(bool bold: {false, true}) {
+            for(const font_file& f: candidates(bold)) {
+                if(load(f.path)) break;
+            }
+        }
+    }
+
     void merge_cjk_fonts() {
         ImFontAtlas* atlas = ImGui::GetIO().Fonts;
         if(!atlas || atlas->Fonts.empty()) return;

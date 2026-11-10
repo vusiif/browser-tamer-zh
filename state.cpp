@@ -133,6 +133,7 @@ namespace bt {
         read<int>(node, "highlight_width", state.highlight_width);
         read<bool>(node, "rediscover_on_config_startup", state.rediscover_on_config_startup);
         read<bool>(node, "discover_black_hole_browser", state.discover_black_hole_browser);
+        read<bool>(node, "run_in_tray", state.run_in_tray);
 
         read<toast_state>(node, "toast", state.toast);
         read<picker_state>(node, "picker", state.picker);
@@ -164,6 +165,7 @@ namespace bt {
         node["highlight_width"] = state.highlight_width;
         node["rediscover_on_config_startup"] = state.rediscover_on_config_startup;
         node["discover_black_hole_browser"] = state.discover_black_hole_browser;
+        node["run_in_tray"] = state.run_in_tray;
         node["toast"] = state.toast;
         node["picker"] = state.picker;
         node["transforms"] = state.transforms;
