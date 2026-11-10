@@ -54,12 +54,28 @@ Browser Tamer 是一个"浏览器路由器"：把它设为系统默认浏览器�
 
 ## 构建
 
-与原项目相同：需要 CMake ≥ 3.31、vcpkg，Windows 上还需要 MSVC。
+需要 CMake ≥ 3.31、vcpkg，Windows 上还需要 Visual Studio（或 Build Tools）的 C++ 工具链。
 
 ```bash
 cmake --preset x64-release
 cmake --build out/build/x64-release
 ```
+
+预设通过环境变量 `VCPKG_ROOT` 找到 vcpkg。
+
+### 打包安装程序（Windows x64）
+
+本分支用 [Inno Setup 6](https://jrsoftware.org/isinfo.php) 打包，安装脚本是 [`installer/bt.iss`](installer/bt.iss)。
+一条命令完成编译、单元测试和打包：
+
+```bash
+pwsh scripts/package-win.ps1
+```
+
+- 找不到 vcpkg 时加 `-VcpkgRoot <vcpkg 目录>`；`-SkipTests` 跳过单元测试，`-SkipBuild` 只打包现有的编译结果。
+- 安装程序输出到 `out/installer/BrowserTamer-zh-<版本>-win64-setup.exe`。
+- 安装到当前用户目录（`%LOCALAPPDATA%\BrowserTamer`），不需要管理员权限；写入的注册表项
+  与原项目的 MSI 安装包（`resources/wix/patch.xml`）一致。
 
 ## 许可证
 
