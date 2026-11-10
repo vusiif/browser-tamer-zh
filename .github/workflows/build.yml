@@ -25,11 +25,11 @@ jobs:
     permissions:
       contents: read
     runs-on: ${{ matrix.os }}
-    # allow Linux build to fail while prototyping
-    # continue-on-error: ${{ matrix.os == 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
+        # This fork only ships Windows x64. Upstream also builds Windows ARM64
+        # (arm64-windows-static), Linux (x64-linux, *.deb) and macOS (arm64-osx / x64-osx, *.dmg).
         include:
           - os: windows-latest
             name: Windows x64
@@ -37,30 +37,6 @@ jobs:
             vcpkg_config: Release
             artifact_suffix: -win-x64
             artifact_pattern: '*.msi'
-          - os: windows-11-arm
-            name: Windows ARM64
-            vcpkg_triplet: arm64-windows-static
-            vcpkg_config: Release
-            artifact_suffix: -win-arm64
-            artifact_pattern: '*.msi'
-          - os: ubuntu-latest
-            name: Linux x64
-            vcpkg_triplet: x64-linux
-            vcpkg_config: MinSizeRel
-            artifact_suffix: -linux-x64
-            artifact_pattern: '*.deb'
-          - os: macos-latest
-            name: Apple Silicon
-            vcpkg_triplet: arm64-osx
-            vcpkg_config: MinSizeRel
-            artifact_suffix: -mac-arm64
-            artifact_pattern: '*.dmg'
-          - os: macos-26-intel
-            name: Apple x64 Intel
-            vcpkg_triplet: x64-osx
-            vcpkg_config: MinSizeRel
-            artifact_suffix: -mac-x64
-            artifact_pattern: '*.dmg'
 
     name: 'build: ${{ matrix.name }}'
     env:
@@ -69,14 +45,7 @@ jobs:
 
     steps:
 
-    - name: 🐧 Dependencies
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get --yes install cmake g++ gdb make ninja-build rsync zip libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config autoconf autoconf-archive automake libtool dpkg-dev imagemagick xvfb
-
     - name: 🪟 Dependencies
-      if: runner.os == 'Windows'
       run: |
         dotnet tool install --global wix
         wix eula accept wix7
@@ -115,22 +84,9 @@ jobs:
 #      run: ls -R
 #      working-directory: build/bt
 
-    - name: 🪟 🧪 unit tests
-      if: runner.os == 'Windows'
+    - name: 🧪 unit tests
       run: |
           ctest --test-dir build -C ${{ matrix.vcpkg_config }} --output-on-failure
-      working-directory: .
-
-    - name: 🐧 🧪 unit tests
-      if: runner.os == 'Linux'
-      run: |
-          ctest --test-dir build --output-on-failure
-      working-directory: .
-
-    - name: 🍎 🧪 unit tests
-      if: runner.os == 'macOS'
-      run: |
-          ctest --test-dir build --output-on-failure
       working-directory: .
 
     - name: 📦 Package Installer
@@ -139,7 +95,7 @@ jobs:
       working-directory: build
 
     - name: 📋 Dump WiX log on failure
-      if: failure() && runner.os == 'Windows'
+      if: failure()
       shell: pwsh
       run: |
         $log = "build/_CPack_Packages/win64/WIX/wix.log"
@@ -246,6 +202,4 @@ jobs:
           name: Browser Tamer 中文版 ${{ env.RELEASE_TAG }}
           files: |
             *.msi
-            *.deb
-          # not yet, but close: *.dmg
           body_path: final_notes.md
