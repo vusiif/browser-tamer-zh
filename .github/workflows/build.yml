@@ -5,14 +5,13 @@ env:
   VCPKG_HASH: d92484ed3c5020c6679d095ad3e5add907887b62
 
 on:
-  push:
-    branches:
-      - master
-    tags:
-      - 'v*'              # release only when pushing a version tag, e.g. v6.3.4-zh.1
-  pull_request:
-    branches:
-      - master
+  # Automatic triggers are paused: only manual runs (Actions tab -> Build -> Run workflow).
+  # To re-enable, restore:
+  #   push:
+  #     branches: [master]
+  #     tags: ['v*']        # release when pushing a version tag, e.g. v6.3.4-zh.1
+  #   pull_request:
+  #     branches: [master]
   workflow_dispatch:
     inputs:
       publish_release:
