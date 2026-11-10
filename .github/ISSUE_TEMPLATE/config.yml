@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: 与汉化无关的功能问题（原项目）
+    url: https://github.com/aloneguid/bt/issues
+    about: 浏览器识别、规则匹配、链接转换等功能问题，请到原项目 aloneguid/bt 反馈（请用英文）。
+  - name: 原项目文档
+    url: https://www.aloneguid.uk/projects/bt/
+    about: Browser Tamer 的使用说明。

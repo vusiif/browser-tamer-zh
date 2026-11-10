@@ -8,9 +8,8 @@ on:
   push:
     branches:
       - master
-      - FetchContent
     tags:
-      - 'v*'              # release only when pushing a version tag
+      - 'v*'              # release only when pushing a version tag, e.g. v6.3.4-zh.1
   pull_request:
     branches:
       - master
@@ -207,12 +206,30 @@ jobs:
         working-directory: .
 
       - name: 🔢 set version environment variable
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          echo "VERSION=$(cat version.txt | xargs)" >> "$GITHUB_ENV"
+          VERSION="$(cat version.txt | xargs)"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          # this fork's releases are tagged separately from upstream's plain "x.y.z" versions:
+          # use the pushed tag (e.g. v6.3.4-zh.1), or v<upstream version>-zh for manual runs
+          if [ "$REF_TYPE" = "tag" ]; then
+            echo "RELEASE_TAG=$REF_NAME" >> "$GITHUB_ENV"
+          else
+            echo "RELEASE_TAG=v$VERSION-zh" >> "$GITHUB_ENV"
+          fi
 
       - name: 🔢 prep release notes / artifacts
         run: |
-          grep -m 2 -B 1000 '^## ' release-notes.md | tail -n +3 | head -n -2 > final_notes.md
+          {
+            echo "Browser Tamer 中文版，基于上游 [aloneguid/bt](https://github.com/aloneguid/bt) ${VERSION}。"
+            echo "本分支只做界面汉化，功能与上游一致；非汉化相关的问题请优先反馈到[原项目](https://github.com/aloneguid/bt/issues)。"
+            echo
+            echo "### 上游 ${VERSION} 更新说明"
+            echo
+            grep -m 2 -B 1000 '^## ' release-notes.md | tail -n +3 | head -n -2
+          } > final_notes.md
           cat final_notes.md
 
       - name: 🔍 view artifacts to be used
@@ -223,11 +240,11 @@ jobs:
       - name: 📦 create release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ env.VERSION }}
-          # this token is required for the release action to work because it also triggers another workflow
-          # permissions: "contents: read and write"
-          token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
-          name: ${{ env.VERSION }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          # the built-in token is enough: no other workflow needs to be triggered by the release
+          # (upstream used a PAT here to trigger its WinGet workflow, which this fork does not have)
+          token: ${{ github.token }}
+          name: Browser Tamer 中文版 ${{ env.RELEASE_TAG }}
           files: |
             *.msi
             *.deb

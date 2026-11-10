@@ -1,19 +1,17 @@
-name: General Issue
-description: Suggestions, ideas, discussions and everything that is not a bug.
+name: 建议与讨论
+description: 翻译改进建议、新增语言（如繁体中文）等不属于 Bug 的内容
 title: "..."
-labels: [ "triage" ]
-assignees:
-  - octocat
+labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report! Please note that this project prohibits the use of LLMs for writing code, firing bug reports, issues, pull requests and everything else. Issues created with LLMs will be treated as spam and you account may be blocked. This does [**not** mean I am anti AI or LLMs are not allowed](https://www.aloneguid.uk/posts/2026/10/on-llm-usage/).
+        功能方面的新想法，请到[原项目](https://github.com/aloneguid/bt/issues)提出，本仓库只做本地化。
   - type: textarea
     id: text
     attributes:
-      label: Issue description
-      description: Please describe the issue. Note that you can also use Discussions tab for general discussions.
+      label: 内容
+      description: 请描述你的建议。翻译建议请写明原文、当前译文和建议的译文。
       value: "..."
     validations:
       required: true
