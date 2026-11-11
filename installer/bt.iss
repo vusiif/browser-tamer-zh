@@ -133,6 +133,20 @@ Root: HKCU; Subkey: "Software\RegisteredApplications"; ValueType: string; ValueN
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 
+[Code]
+// bt.exe keeps running in the tray: ask the installed copy to quit before files are replaced
+// (Restart Manager via CloseApplications is only the fallback)
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ExePath: String;
+  ResultCode: Integer;
+begin
+  Result := '';
+  ExePath := ExpandConstant('{app}\{#AppExe}');
+  if FileExists(ExePath) then
+    Exec(ExePath, '--quit', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;
+
 [UninstallRun]
-; bt.exe keeps running in the tray; ask it to quit (no /F: it exits cleanly and removes its tray icon)
-Filename: "{sys}\taskkill.exe"; Parameters: "/IM {#AppExe}"; Flags: runhidden waituntilterminated; RunOnceId: "StopResident"
+; bt.exe keeps running in the tray; ask it to quit and wait until it has (taskkill may miss its window)
+Filename: "{app}\{#AppExe}"; Parameters: "--quit"; Flags: runhidden waituntilterminated; RunOnceId: "StopResident"

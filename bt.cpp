@@ -340,6 +340,10 @@ int wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int n
         return 0;
     }
 
+    if(cmd_line == resident::QuitSwitch) {
+        return resident::quit_running() ? 0 : 1;
+    }
+
     const bool tray_only = cmd_line == resident::TraySwitch;
     const string data = tray_only ? string{} : parse_args(cmd_line);
 

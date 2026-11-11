@@ -360,6 +360,21 @@ namespace bt::resident {
         return true;
     }
 
+    bool quit_running(unsigned long timeout_ms) {
+        HWND h = find_resident();
+        if(!h) return true;
+
+        DWORD pid{0};
+        ::GetWindowThreadProcessId(h, &pid);
+        HANDLE process = ::OpenProcess(SYNCHRONIZE, FALSE, pid);
+        ::PostMessageW(h, WM_CLOSE, 0, 0);
+        if(!process) return find_resident() == nullptr;
+
+        const bool exited = ::WaitForSingleObject(process, timeout_ms) == WAIT_OBJECT_0;
+        ::CloseHandle(process);
+        return exited;
+    }
+
     bool is_autostart_enabled() {
         HKEY key;
         if(::RegOpenKeyExW(HKEY_CURRENT_USER, RunKey.c_str(), 0, KEY_QUERY_VALUE, &key) != ERROR_SUCCESS) return false;
@@ -403,6 +418,7 @@ namespace bt::resident {
     bool cancel_requested() { return false; }
     bool bring_own_window_to_front() { return false; }
     bool spawn_direct(const string&) { return false; }
+    bool quit_running(unsigned long) { return true; }
     bool is_autostart_enabled() { return false; }
     void set_autostart(bool) {}
 

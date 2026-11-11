@@ -81,6 +81,18 @@ namespace bt::resident {
      */
     constexpr const char* TraySwitch = "--tray";
 
+    /**
+     * Command line switch that asks a running resident instance to quit (used by the uninstaller and the packaging
+     * script). taskkill is not enough: it may deliver WM_CLOSE to an input method window instead of ours.
+     */
+    constexpr const char* QuitSwitch = "--quit";
+
+    /**
+     * Asks the running resident instance to quit and waits for its process to exit.
+     * @return true if none is running any more.
+     */
+    bool quit_running(unsigned long timeout_ms = 5000);
+
     bool is_autostart_enabled();
     void set_autostart(bool enabled);
 }
